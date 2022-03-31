@@ -1,4 +1,4 @@
-class _keyboard:
+class keyboard:
     main_menu = [
         ['Add Source', 'Remove Source'],
         ['Settings'],
