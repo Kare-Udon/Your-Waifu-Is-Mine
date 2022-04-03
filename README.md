@@ -1,4 +1,4 @@
-# Your Wifu Is Mine
+# Your Waifu Is Mine
 
 ![](./readme.png)
 
