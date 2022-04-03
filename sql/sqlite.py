@@ -55,6 +55,8 @@ class database:
         pass
     
     def add_new_twitter_user_database(self, database_name):
+        if database_name[0].isdigit():
+            database_name = "_" + database_name
         conn = sqlite3.connect('twitter.db')
         c = conn.cursor()
         command = "CREATE TABLE IF NOT EXISTS " + database_name + " (tweet_id TEXT PRIMARY KEY)"
@@ -63,6 +65,8 @@ class database:
         conn.close()
         
     def del_twitter_user_database(self, database_name):
+        if database_name[0].isdigit():
+            database_name = "_" + database_name
         conn = sqlite3.connect('twitter.db')
         c = conn.cursor()
         command = "DROP TABLE IF EXISTS " + database_name
@@ -71,6 +75,8 @@ class database:
         conn.close()
         
     def add_new_tweet(self, database_name, tweet_id):
+        if database_name[0].isdigit():
+            database_name = "_" + database_name
         conn = sqlite3.connect('twitter.db')
         c = conn.cursor()
         command = "SELECT tweet_id FROM " + database_name + " WHERE tweet_id=" + str(tweet_id)
@@ -85,6 +91,8 @@ class database:
             return False
         
     def shorten_db(self, database_name):
+        if database_name[0].isdigit():
+            database_name = "_" + database_name
         conn = sqlite3.connect('twitter.db')
         c = conn.cursor()
         command = "DELETE FROM " + database_name + " WHERE tweet_id IN ( SELECT tweet_id FROM ( SELECT tweet_id FROM " + database_name + " ORDER BY tweet_id DESC LIMIT 30, 100) a);"
