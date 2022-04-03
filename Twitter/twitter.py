@@ -1,9 +1,19 @@
 import tweepy
+import os
 import requests
+
+TWITTER_TOKEN = ""
+
+if TWITTER_TOKEN == "":
+    TWITTER_TOKEN = os.environ['TWITTER_TOKEN']
+
+if TWITTER_TOKEN == "":
+    print("Please set TWITTER_TOKEN")
+    exit(1)
 
 class Twitter:
     def __init__(self):
-        self.client = tweepy.Client("", return_type='json')
+        self.client = tweepy.Client(TWITTER_TOKEN, return_type='json')
     
     def get_new_tweets_of_user(self, twitter_id):
         tweets = self.client.get_users_tweets(

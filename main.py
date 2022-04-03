@@ -1,4 +1,5 @@
 from time import sleep
+import os
 import logging
 import telepot
 from telepot.loop import MessageLoop
@@ -17,10 +18,18 @@ twi = Twitter.twitter.Twitter()
 db = sql.sqlite.database()
 k = Telegram.keyboard.keyboard()
 
-TWITTER_TOKEN = ""
+BOT_TOKEN = ""
 ALLOWED_USERS = ['']
 BINDED_GROUP = ''
 
+if BOT_TOKEN == "" and ALLOWED_USERS == [] and BINDED_GROUP == "":
+    BOT_TOKEN = os.environ['BOT_TOKEN']
+    ALLOWED_USERS = os.environ['ALLOWED_USERS'].split(',')
+    BINDED_GROUP = os.environ['BINDED_GROUP']
+
+if BOT_TOKEN == "" and ALLOWED_USERS == [] and BINDED_GROUP == "":
+    print("Please set BOT_TOKEN, ALLOWED_USERS and BINDED_GROUP")
+    exit(1)
 
 class GoldenArches(telepot.helper.ChatHandler):
     def __init__(self, *args, **kwargs):
@@ -138,7 +147,7 @@ class GoldenArches(telepot.helper.ChatHandler):
             self.indicator = 'start'
 
 
-bot = telepot.DelegatorBot(TWITTER_TOKEN, [
+bot = telepot.DelegatorBot(BOT_TOKEN, [
     pave_event_space()(
         per_chat_id(), create_open, GoldenArches, timeout=30),
 ])
@@ -170,7 +179,7 @@ while(1):
                     bot.sendMessage(BINDED_GROUP, text=text)
                 else:
                     break
-            db.shorten_db(name)
+            db.shorten_twitter_db(name)
     except Exception as e:
         print("Twitter update failed, please check the log file.")
         logging.error(str(e))

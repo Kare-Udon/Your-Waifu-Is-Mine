@@ -90,7 +90,7 @@ class database:
         else:
             return False
         
-    def shorten_db(self, database_name):
+    def shorten_twitter_db(self, database_name):
         if database_name[0].isdigit():
             database_name = "_" + database_name
         conn = sqlite3.connect('twitter.db')
