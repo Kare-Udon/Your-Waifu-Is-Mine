@@ -1,5 +1,5 @@
 from time import sleep
-import os
+import logging
 import telepot
 from telepot.loop import MessageLoop
 from telepot.delegate import pave_event_space, per_chat_id, create_open
@@ -9,12 +9,15 @@ import Telegram.keyboard
 import sql.sqlite
 import Twitter.twitter
 
+LOG_FORMAT = "%(asctime)s - %(levelname)s - %(message)s"
+logging.basicConfig(filename="error.log",
+                    level=logging.ERROR, format=LOG_FORMAT)
+
 twi = Twitter.twitter.Twitter()
 db = sql.sqlite.database()
 k = Telegram.keyboard.keyboard()
 
-TOKEN = os.getenv('TG_BOT_TOKEN')
-
+TWITTER_TOKEN = ""
 ALLOWED_USERS = ['']
 BINDED_GROUP = ''
 
@@ -135,35 +138,48 @@ class GoldenArches(telepot.helper.ChatHandler):
             self.indicator = 'start'
 
 
-bot = telepot.DelegatorBot(TOKEN, [
+bot = telepot.DelegatorBot(TWITTER_TOKEN, [
     pave_event_space()(
-        per_chat_id(), create_open, GoldenArches, timeout=10),
+        per_chat_id(), create_open, GoldenArches, timeout=30),
 ])
 
 MessageLoop(bot).run_as_thread()
 
 while(1):
-    #sleep(10000)
+    # sleep(10000)
+
     # Twitter update #
-    twitter_infos = db.get_all_twitter_user_info()
-    for info in twitter_infos:
-        name = info[0]
-        id = info[1]
-        return_data = twi.get_new_tweets_of_user(id)
-        tweets_with_media = return_data[0]
-        #medias = return_data[1]
-        for tweet in tweets_with_media:
-            if db.add_new_tweet(name, tweet['id']):
-        #        mediakeys = tweet['attachments']['media_keys']
-        #        photo_urls = []
-        #        for mediakey in mediakeys:
-        #            for media in medias:
-        #                if mediakey == media['media_key']:
-        #                    photo_urls.append(telepot.namedtuple.InputMediaPhoto(media=media['url']))
-                text = tweet['text']
-        #        bot.sendMediaGroup(BINDED_GROUP, photo_urls)
-                bot.sendMessage(BINDED_GROUP, text=text)
-            else:
-                break
-        db.shorten_db(name)
+    try:
+        twitter_infos = db.get_all_twitter_user_info()
+        for info in twitter_infos:
+            name = info[0]
+            id = info[1]
+            return_data = twi.get_new_tweets_of_user(id)
+            tweets_with_media = return_data[0]
+            #medias = return_data[1]
+            for tweet in tweets_with_media:
+                if db.add_new_tweet(name, tweet['id']):
+                    #mediakeys = tweet['attachments']['media_keys']
+                    #photo_urls = []
+                    # for mediakey in mediakeys:
+                    # for media in medias:
+                    # if mediakey == media['media_key']:
+                    # photo_urls.append(telepot.namedtuple.InputMediaPhoto(media=media['url']))
+                    text = tweet['text']
+                    #bot.sendMediaGroup(BINDED_GROUP, photo_urls)
+                    bot.sendMessage(BINDED_GROUP, text=text)
+                else:
+                    break
+            db.shorten_db(name)
+    except Exception as e:
+        print("Twitter update failed, please check the log file.")
+        logging.error(str(e))
+
+    # Pixiv update #
+    try:
+        pass
+    except Exception as e:
+        print("Pixiv update failed, please check the log file.")
+        logging.error(str(e))
+
     sleep(1200)
