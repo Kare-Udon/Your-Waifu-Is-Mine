@@ -1,4 +1,4 @@
 PixivPy==3.7.0
-requests==2.22.0
+requests==2.27.1
 telepot==12.7
 tweepy==4.6.0
