@@ -29,10 +29,12 @@ class Twitter:
         else:
             return ([], None)
         tweets_with_media = []
+        true_urls = []
         for tweet in data:
             if tweet['attachments'] != None:
-                tweets_with_media.append(tweet)   
-        return (tweets_with_media, media)
+                tweets_with_media.append(tweet)
+                true_urls.append("https://twitter.com/i/web/status/" + str(tweet['id']))   
+        return (tweets_with_media, media, true_urls)
     
     def url_to_id(self, username):
         header = {

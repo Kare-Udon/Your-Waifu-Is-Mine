@@ -166,7 +166,8 @@ while(1):
             return_data = twi.get_new_tweets_of_user(id)
             tweets_with_media = return_data[0]
             #medias = return_data[1]
-            for tweet in tweets_with_media:
+            true_urls = return_data[2]
+            for tweet, true_url in zip(tweets_with_media, true_urls):
                 if db.add_new_tweet(name, tweet['id']):
                     #mediakeys = tweet['attachments']['media_keys']
                     #photo_urls = []
@@ -174,9 +175,9 @@ while(1):
                     # for media in medias:
                     # if mediakey == media['media_key']:
                     # photo_urls.append(telepot.namedtuple.InputMediaPhoto(media=media['url']))
-                    text = tweet['text']
+                    #text = tweet['text']
                     #bot.sendMediaGroup(BINDED_GROUP, photo_urls)
-                    bot.sendMessage(BINDED_GROUP, text=text)
+                    bot.sendMessage(BINDED_GROUP, text=true_url)
                 else:
                     break
             db.shorten_twitter_db(name)
