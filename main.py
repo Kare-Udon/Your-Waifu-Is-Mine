@@ -3,6 +3,7 @@ import os
 import logging
 import telepot
 import traceback
+import json
 from telepot.loop import MessageLoop
 from telepot.delegate import pave_event_space, per_chat_id, create_open
 from telepot.namedtuple import ReplyKeyboardMarkup
@@ -19,9 +20,19 @@ twi = Twitter.twitter.Twitter()
 db = sql.sqlite.database()
 k = Telegram.keyboard.keyboard()
 
-BOT_TOKEN = ""
-ALLOWED_USERS = ['']
-BINDED_GROUP = ''
+try:
+    f = open("./settings.json", "r")
+except FileNotFoundError:
+    print("Please create settings.json")
+
+settings_json = f.read()
+f.close()
+settings = json.loads(settings_json)
+
+
+BOT_TOKEN = settings["telegram"]["BOT_TOKEN"]
+ALLOWED_USERS = settings["telegram"]["ALLOWED_USERS"]
+BINDED_GROUP = settings["telegram"]["BINDED_GROUP"]
 
 if BOT_TOKEN == "" and ALLOWED_USERS == [] and BINDED_GROUP == "":
     BOT_TOKEN = os.environ['BOT_TOKEN']
@@ -31,6 +42,7 @@ if BOT_TOKEN == "" and ALLOWED_USERS == [] and BINDED_GROUP == "":
 if BOT_TOKEN == "" and ALLOWED_USERS == [] and BINDED_GROUP == "":
     print("Please set BOT_TOKEN, ALLOWED_USERS and BINDED_GROUP")
     exit(1)
+
 
 class GoldenArches(telepot.helper.ChatHandler):
     def __init__(self, *args, **kwargs):

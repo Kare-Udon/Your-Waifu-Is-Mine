@@ -1,0 +1,12 @@
+{
+    "telegram": {
+        "BOT_TOKEN": "",
+        "ALLOWED_USERS": [
+            ""
+        ],
+        "BINDED_GROUP": ""
+    },
+    "twitter": {
+        "TWITTER_TOKEN": ""
+    }
+}
