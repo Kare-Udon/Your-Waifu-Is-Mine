@@ -34,7 +34,7 @@ class Twitter:
             if tweet['attachments'] != None:
                 tweets_with_media.append(tweet)
                 true_urls.append("https://twitter.com/i/web/status/" + str(tweet['id']))   
-        return (tweets_with_media, media, true_urls)
+        return [tweets_with_media, media, true_urls]
     
     def url_to_id(self, username):
         header = {
