@@ -2,6 +2,7 @@ from time import sleep
 import os
 import logging
 import telepot
+import traceback
 from telepot.loop import MessageLoop
 from telepot.delegate import pave_event_space, per_chat_id, create_open
 from telepot.namedtuple import ReplyKeyboardMarkup
@@ -184,6 +185,7 @@ while(1):
     except Exception as e:
         print("Twitter update failed, please check the log file.")
         logging.error(str(e))
+        logging.error(traceback.format_exc())
 
     # Pixiv update #
     try:
@@ -191,5 +193,6 @@ while(1):
     except Exception as e:
         print("Pixiv update failed, please check the log file.")
         logging.error(str(e))
+        logging.error(traceback.format_exc())
 
     sleep(1200)
