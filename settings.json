@@ -4,7 +4,8 @@
         "ALLOWED_USERS": [
             ""
         ],
-        "BINDED_GROUP": ""
+        "BINDED_GROUP": "",
+        "SENT_INTERVAL": ""
     },
     "twitter": {
         "TWITTER_TOKEN": ""

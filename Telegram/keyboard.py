@@ -3,18 +3,18 @@ class keyboard:
         ['Add Source', 'Remove Source'],
         ['Settings'],
     ]
-    
+
     add_source_menu = [
         ['Twitter', 'Pixiv'],
-        ['Back to Main Menu'],
+        ['Go Back'],
     ]
-    
+
     remove_source_menu = [
         ['Twitter', 'Pixiv'],
-        ['Back to Main Menu'],
+        ['Go Back'],
     ]
-    
+
     settings_menu = [
-        ['test'],
-        ['Back to Main Menu'],
+        ['List Twitter Source'],
+        ['Go Back'],
     ]
