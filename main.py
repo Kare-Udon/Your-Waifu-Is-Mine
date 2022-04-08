@@ -1,8 +1,9 @@
 import logging
 import json
 import os
+import prettytable as pt
 
-from telegram import ReplyKeyboardMarkup, ReplyKeyboardRemove, Update
+from telegram import ReplyKeyboardMarkup, ReplyKeyboardRemove, Update, ParseMode
 from telegram.ext import (
     Updater,
     CommandHandler,
@@ -50,13 +51,14 @@ LOG_FORMAT = "%(asctime)s - %(levelname)s - %(message)s"
 logging.basicConfig(filename="error.log",
                     level=logging.ERROR, format=LOG_FORMAT)
 
-FUNCTION_SELECT, ADD_SOURCE, REMOVE_SOURCE, ADD_TWITTER, ADD_PIXIV, REMOVE_TWITTER, REMOVE_PIXIV, SETTINGS = range(
-    8)
+FUNCTION_SELECT, ADD_SOURCE, REMOVE_SOURCE, ADD_TWITTER, ADD_PIXIV, REMOVE_TWITTER, REMOVE_PIXIV, SETTINGS, SETTINGS_LIST_SOURCE = range(
+    9)
 
 
 def start(update: Update, context: CallbackContext) -> int:
     context.job_queue.run_once(get_twitter_update, when=0)
-    context.job_queue.run_repeating(get_twitter_update, interval=int(SENT_INTERVAL), first=0)
+    context.job_queue.run_repeating(
+        get_twitter_update, interval=int(SENT_INTERVAL), first=0)
     user = update.message.from_user['username']
     if user not in ALLOWED_USERS:
         update.message.reply_text(
@@ -104,11 +106,10 @@ def function_select(update: Update, context: CallbackContext) -> int:
     if message == 'Settings':
         reply_keyboard = k.settings_menu
         update.message.reply_text(
-            'Here are the settings you can change.',
+            'Here are the settings.',
             reply_markup=ReplyKeyboardMarkup(
                 reply_keyboard,
                 resize_keyboard=True,
-                one_time_keyboard=True,
             ),
         )
         return SETTINGS
@@ -239,9 +240,46 @@ def remove_pixiv(update: Update, context: CallbackContext) -> int:
 
 
 def settings(update: Update, context: CallbackContext) -> int:
+    message = update.message.text
+    if message == 'List Source':
+        reply_keyboard = k.list_source_menu
+        update.message.reply_text(
+            'Choose the platform you want to list.',
+            reply_markup=ReplyKeyboardMarkup(
+                reply_keyboard,
+                resize_keyboard=True,
+            ),
+        )
+        return SETTINGS_LIST_SOURCE
+
+    reply_keyboard = k.main_menu
     update.message.reply_text(
-        'Under construction.',
+        'Choose the function below.',
+        reply_markup=ReplyKeyboardMarkup(
+            reply_keyboard,
+            resize_keyboard=True,
+        ),
     )
+    return FUNCTION_SELECT
+
+
+def list_source(update: Update, context: CallbackContext) -> int:
+    message = update.message.text
+    if message == 'Twitter':
+        infos = db.get_all_twitter_user_info()
+        table = pt.PrettyTable(['Username', 'Twitter ID'])
+        table.align['Username'] = 'l'
+        table.align['Twitter ID'] = 'l'
+        for info in infos:
+            table.add_row([info[0], info[1]])
+        
+        update.message.reply_text(
+            f'<pre>{table}</pre>', parse_mode=ParseMode.HTML
+        )
+    if message == 'Pixiv':
+        update.message.reply_text(
+            'Under construction.',
+        )
 
     reply_keyboard = k.main_menu
     update.message.reply_text(
@@ -296,7 +334,8 @@ def main() -> None:
             REMOVE_SOURCE: [MessageHandler(Filters.regex('^(Twitter|Pixiv|Go Back)$'), remove_source)],
             REMOVE_TWITTER: [MessageHandler(Filters.text, remove_twitter)],
             REMOVE_PIXIV: [MessageHandler(Filters.text, remove_pixiv)],
-            SETTINGS: [MessageHandler(Filters.text, settings)],
+            SETTINGS: [MessageHandler(Filters.regex('^(List Source|Go Back)$'), settings)],
+            SETTINGS_LIST_SOURCE: [MessageHandler(Filters.regex('^(Twitter|Pixiv|Go Back)$'), list_source)],
         },
         fallbacks=[CommandHandler('cancel', function_select)],
     )

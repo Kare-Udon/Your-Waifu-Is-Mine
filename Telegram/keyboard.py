@@ -15,6 +15,11 @@ class keyboard:
     ]
 
     settings_menu = [
-        ['List Twitter Source'],
+        ['List Source'],
+        ['Go Back'],
+    ]
+    
+    list_source_menu = [
+        ['Twitter', 'Pixiv'],
         ['Go Back'],
     ]
