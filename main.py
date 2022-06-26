@@ -3,7 +3,7 @@ import json
 import os
 import prettytable as pt
 
-from telegram import ReplyKeyboardMarkup, ReplyKeyboardRemove, Update, ParseMode
+from telegram import ReplyKeyboardMarkup, ReplyKeyboardRemove, Update, ParseMode, InputMediaPhoto
 from telegram.ext import (
     Updater,
     CommandHandler,
@@ -272,7 +272,7 @@ def list_source(update: Update, context: CallbackContext) -> int:
         table.align['Twitter ID'] = 'l'
         for info in infos:
             table.add_row([info[0], info[1]])
-        
+
         update.message.reply_text(
             f'<pre>{table}</pre>', parse_mode=ParseMode.HTML
         )
@@ -301,21 +301,36 @@ def get_twitter_update(context: CallbackContext) -> None:
         tweets_with_media = return_data[0]
         true_urls = []
         if tweets_with_media != []:
-            #medias = return_data[1]
+            medias = return_data[1]
             true_urls = return_data[2]
-        for tweet, true_url in zip(tweets_with_media, true_urls):
-            if db.add_new_tweet(name, tweet['id']):
-                #mediakeys = tweet['attachments']['media_keys']
-                #photo_urls = []
-                # for mediakey in mediakeys:
-                # for media in medias:
-                # if mediakey == media['media_key']:
-                # photo_urls.append(telepot.namedtuple.InputMediaPhoto(media=media['url']))
-                #text = tweet['text']
-                #bot.sendMediaGroup(BINDED_GROUP, photo_urls)
-                context.bot.sendMessage(BINDED_GROUP, true_url)
+
+        image_counter = 0
+        for tweet_with_media in tweets_with_media:
+            if db.add_new_tweet(name, tweet_with_media['id']):
+                num_of_images = len(tweet_with_media['attachments']['media_keys'])
+                twitter_url = "https://twitter.com/" + \
+                    str(name) + "/status/" + str(tweet_with_media['id'])
+
+                media = []
+                for index in range(num_of_images):
+                    if index == 0:
+                        media.append(InputMediaPhoto(
+                            medias[index + image_counter]['url'], caption=twitter_url))
+                    else:
+                        media.append(InputMediaPhoto(medias[index]['url']))
+                    image_counter += 1
+
+                context.bot.send_media_group(BINDED_GROUP, media)
             else:
                 break
+            
+        # old version, only return tweet URL    
+        # for tweet, true_url in zip(tweets_with_media, true_urls):
+        #     if db.add_new_tweet(name, tweet['id']):
+        #         context.bot.sendMessage(BINDED_GROUP, true_url)
+        #     else:
+        #         break
+
         db.shorten_twitter_db(name)
 
 
