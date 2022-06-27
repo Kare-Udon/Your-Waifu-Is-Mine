@@ -167,7 +167,7 @@ class Pixiv:
 
                         one_post_return_data.append(input_medias)
                 else:
-                    return []
+                    break
                 return_data.append(one_post_return_data)
         if not user_id:
             db.shorten_pixiv_db(user_id)
