@@ -18,6 +18,7 @@ LOG_FORMAT = "%(asctime)s - %(levelname)s - %(message)s"
 logging.basicConfig(filename="error.log",
                     level=logging.ERROR, format=LOG_FORMAT)
 
+loop = asyncio.new_event_loop()
 
 class Pixiv:
     api = AppPixivAPI()
@@ -44,6 +45,8 @@ class Pixiv:
             exit(1)
 
         Pixiv.api.set_auth(ACCESS_TOKEN, REFRESH_TOKEN)
+
+        
 
     def refresh_token(self, refresh_token):
         USER_AGENT = "PixivAndroidApp/5.0.234 (Android 11; Pixel 5)"
@@ -85,11 +88,11 @@ class Pixiv:
             page_count = data[i].page_count
             image_urls = []
             if page_count == 1:
-                image_urls.append(data[i].meta_single_page.original_image_url)
+                image_urls.append(data[i].image_urls.large)
             else:
                 meta_pages = data[i].meta_pages
                 for page in meta_pages:
-                    image_urls.append(page.image_urls.original)
+                    image_urls.append(page.image_urls.large)
             return_data.append((data[i].id, image_urls))
         return return_data
 
@@ -118,7 +121,6 @@ class Pixiv:
                 self, Pixiv.api.refresh_token)
             Pixiv.api.set_auth(access_token, refresh_token)
 
-        loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
 
         user_info = db.get_all_pixiv_user_info()
