@@ -7,6 +7,7 @@ from telegram import InputMediaPhoto
 
 db = sql.sqlite.database()
 
+
 class Twitter:
     def __init__(self):
         try:
@@ -25,12 +26,12 @@ class Twitter:
         if TWITTER_TOKEN == "":
             print("Please set TWITTER_TOKEN")
             exit(1)
-            
+
         self.client = tweepy.Client(TWITTER_TOKEN, return_type='json')
 
-    def get_new_tweets_of_user(self, twitter_id):
+    def get_new_tweets_of_user(self, user_id):
         tweets = self.client.get_users_tweets(
-            id=twitter_id,
+            id=user_id,
             exclude=['retweets', 'replies'],
             expansions=['attachments.media_keys'],
             media_fields=['url', 'preview_image_url'],
@@ -61,34 +62,37 @@ class Twitter:
 
     def get_twitter_update(self):
         twitter_infos = db.get_all_twitter_user_info()
+        return_data = []    #
         for info in twitter_infos:
             name = info[0]
-            id = info[1]
-            return_data = Twitter.get_new_tweets_of_user(self, id)
-            tweets_with_media = return_data[0]
+            user_id = info[1]
+            tweets_data = Twitter.get_new_tweets_of_user(self, user_id)
+            tweets_with_media = tweets_data[0]
             true_urls = []
             if tweets_with_media != []:
-                medias = return_data[1]
-                true_urls = return_data[2]
+                medias = tweets_data[1]
+                true_urls = tweets_data[2]
 
             image_counter = 0
             for tweet_with_media in tweets_with_media:
-                if db.add_new_tweet(name, tweet_with_media['id']):
-                    num_of_images = len(tweet_with_media['attachments']['media_keys'])
+                if db.add_new_tweet(tweet_with_media['id'], user_id):
+                    num_of_images = len(
+                        tweet_with_media['attachments']['media_keys'])
                     twitter_url = "https://twitter.com/" + \
                         str(name) + "/status/" + str(tweet_with_media['id'])
 
-                    media = []
+                    input_medias = []
                     for index in range(num_of_images):
                         if index == 0:
-                            media.append(InputMediaPhoto(
+                            input_medias.append(InputMediaPhoto(
                                 medias[index + image_counter]['url'], caption=twitter_url))
                         else:
-                            media.append(InputMediaPhoto(medias[index]['url']))
+                            input_medias.append(
+                                InputMediaPhoto(medias[index]['url']))
                         image_counter += 1
-
-                    return media
+                    return_data.append(input_medias)
                 else:
                     return []
 
-        db.shorten_twitter_db(name)
+        db.shorten_twitter_db(user_id)
+        return return_data

@@ -16,8 +16,10 @@ from telegram.ext import (
 import Telegram.keyboard
 import sql.sqlite
 import Twitter.twitter
+import Pixiv.pixiv
 
 twi = Twitter.twitter.Twitter()
+pix = Pixiv.pixiv.Pixiv()
 db = sql.sqlite.database()
 k = Telegram.keyboard.keyboard()
 
@@ -56,6 +58,9 @@ FUNCTION_SELECT, ADD_SOURCE, REMOVE_SOURCE, ADD_TWITTER, ADD_PIXIV, REMOVE_TWITT
 
 
 def start(update: Update, context: CallbackContext) -> int:
+    # initlize the database
+    db.init_database()
+    # set repeating job
     context.job_queue.run_once(get_update, when=0)
     context.job_queue.run_repeating(
         get_update, interval=int(SENT_INTERVAL), first=0)
@@ -125,8 +130,9 @@ def add_source(update: Update, context: CallbackContext) -> int:
         return ADD_TWITTER
     if message == 'Pixiv':
         update.message.reply_text(
-            'Under construction.',
+            "Please send me the url of a pixiv user. Link format:'https://www.pixiv.net/users/PIXIV_USERID' Send /cancel to cancel.",
         )
+        return ADD_PIXIV
     # OR Go Back
     reply_keyboard = k.main_menu
     update.message.reply_text(
@@ -163,9 +169,17 @@ def add_twitter(update: Update, context: CallbackContext) -> int:
 
 
 def add_pixiv(update: Update, context: CallbackContext) -> int:
-    update.message.reply_text(
-        "Under construction.",
-    )
+    message = update.message.text
+    if message != '/cancel':
+        user_id = message.split('/')[-1]
+        username = pix.get_username(user_id)
+        if db.add_pixiv_user(user_id, username):
+            update.message.reply_text(
+                "Pixiv user " + username + " add successfully.")
+        else:
+            update.message.reply_text(
+                "Pixiv user " + username + " add failed or already exists.")
+
     reply_keyboard = k.main_menu
     update.message.reply_text(
         'Choose the function below.',
@@ -186,8 +200,9 @@ def remove_source(update: Update, context: CallbackContext) -> int:
         return REMOVE_TWITTER
     if message == 'Pixiv':
         update.message.reply_text(
-            'Under construction.',
+            "Please send me the url of a pixiv user. Link format:'https://www.pixiv.net/users/PIXIV_USERID' Send /cancel to cancel.",
         )
+        return REMOVE_PIXIV
     # OR Go Back
     reply_keyboard = k.main_menu
     update.message.reply_text(
@@ -225,9 +240,15 @@ def remove_twitter(update: Update, context: CallbackContext) -> int:
 
 
 def remove_pixiv(update: Update, context: CallbackContext) -> int:
-    update.message.reply_text(
-        'Under construction.',
-    )
+    message = update.message.text
+    if message != '/cancel':
+        user_id = message.split('/')[-1]
+        if db.del_pixiv_user(user_id):
+            update.message.reply_text(
+                "Delete Successfully.")
+        else:
+            update.message.reply_text(
+                "Delete Failed. Please check the log file.")
 
     reply_keyboard = k.main_menu
     update.message.reply_text(
@@ -278,8 +299,15 @@ def list_source(update: Update, context: CallbackContext) -> int:
             f'<pre>{table}</pre>', parse_mode=ParseMode.HTML
         )
     if message == 'Pixiv':
+        infos = db.get_all_pixiv_user_info()
+        table = pt.PrettyTable(['Username', 'Pixiv ID'])
+        table.align['Username'] = 'l'
+        table.align['Pixiv ID'] = 'l'
+        for info in infos:
+            table.add_row([info[0], info[1]])
+
         update.message.reply_text(
-            'Under construction.',
+            f'<pre>{table}</pre>', parse_mode=ParseMode.HTML
         )
 
     reply_keyboard = k.main_menu
@@ -294,9 +322,18 @@ def list_source(update: Update, context: CallbackContext) -> int:
 
 
 def get_update(context: CallbackContext) -> None:
-    media = twi.get_twitter_update()
-    if media:
-        context.bot.send_media_group(BINDED_GROUP, media)
+    pass
+    # get twitter update
+    medias = twi.get_twitter_update()
+    if medias:
+        for media in medias:
+            context.bot.send_media_group(BINDED_GROUP, media)
+
+    # get pixiv update
+    return_data = pix.get_pixiv_update()
+    for medias in return_data:
+        for media in medias:
+            context.bot.send_media_group(BINDED_GROUP, media)
 
 
 def main() -> None:
