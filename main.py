@@ -1,6 +1,7 @@
 import logging
 import json
 import os
+from time import sleep
 import prettytable as pt
 
 from telegram import ReplyKeyboardMarkup, ReplyKeyboardRemove, Update, ParseMode, InputMediaPhoto
@@ -328,12 +329,14 @@ def get_update(context: CallbackContext) -> None:
     if medias:
         for media in medias:
             context.bot.send_media_group(BINDED_GROUP, media)
+            sleep(3)
 
     # get pixiv update
     return_data = pix.get_pixiv_update()
     for medias in return_data:
         for media in medias:
             context.bot.send_media_group(BINDED_GROUP, media)
+            sleep(3)
 
 
 def main() -> None:
