@@ -327,16 +327,26 @@ def get_update(context: CallbackContext) -> None:
     # get twitter update
     medias = twi.get_twitter_update()
     if medias:
-        for media in medias:
-            context.bot.send_media_group(BINDED_GROUP, media)
-            sleep(3)
+        if len(medias) > 4:
+            for media in medias:
+                context.bot.send_media_group(BINDED_GROUP, media)
+                sleep(21)
+        else:
+            for media in medias:
+                context.bot.send_media_group(BINDED_GROUP, media)
+                sleep(4)
 
     # get pixiv update
     return_data = pix.get_pixiv_update()
     for medias in return_data:
-        for media in medias:
-            context.bot.send_media_group(BINDED_GROUP, media)
-            sleep(3)
+        if len(return_data) > 4:
+            for media in medias:
+                context.bot.send_media_group(BINDED_GROUP, media)
+                sleep(21)
+        else:
+            for media in medias:
+                context.bot.send_media_group(BINDED_GROUP, media)
+                sleep(4)
 
 
 def main() -> None:
