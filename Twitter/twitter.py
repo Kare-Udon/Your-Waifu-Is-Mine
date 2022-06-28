@@ -92,7 +92,7 @@ class Twitter:
                         image_counter += 1
                     return_data.append(input_medias)
                 else:
-                    return []
+                    break
 
         db.shorten_twitter_db(user_id)
         return return_data
