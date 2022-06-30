@@ -1,6 +1,7 @@
 import logging
 import json
 import os
+import traceback
 from time import sleep
 import prettytable as pt
 
@@ -28,6 +29,7 @@ try:
     f = open("./settings.json", "r")
 except FileNotFoundError:
     print("Please create settings.json")
+    exit(1)
 
 settings_json = f.read()
 f.close()
@@ -323,30 +325,57 @@ def list_source(update: Update, context: CallbackContext) -> int:
 
 
 def get_update(context: CallbackContext) -> None:
-    pass
     # get twitter update
-    medias = twi.get_twitter_update()
+    try:
+        medias = twi.get_twitter_update()
+    except Exception as e:
+        medias = []
+        error_info = "Fail to get twitter update.\n" + traceback.format_exc(e)
+        logging.error(error_info)
+
     if medias:
         if len(medias) > 4:
             for media in medias:
-                context.bot.send_media_group(BINDED_GROUP, media)
-                sleep(21)
+                try:
+                    context.bot.send_media_group(BINDED_GROUP, media)
+                    sleep(21)
+                except Exception as e:
+                    error_info = "Fail to send media group.\nmedia info:\n" + media.__str__ + "\n" + traceback.format_exc(e) + "\n\n"
+                    logging.error(error_info)
         else:
             for media in medias:
-                context.bot.send_media_group(BINDED_GROUP, media)
-                sleep(4)
+                try:
+                    context.bot.send_media_group(BINDED_GROUP, media)
+                    sleep(4)
+                except Exception as e:
+                    error_info = "Fail to send media group.\nmedia info:\n" + media.__str__ + "\n" + traceback.format_exc(e) + "\n\n"
+                    logging.error(error_info)
 
     # get pixiv update
-    return_data = pix.get_pixiv_update()
+    try:
+        return_data = pix.get_pixiv_update()
+    except Exception as e:
+        return_data = []
+        error_info = "Fail to get pixiv update.\n" + traceback.format_exc(e)
+        logging.error(error_info)
+
     for medias in return_data:
         if len(return_data) > 4:
             for media in medias:
-                context.bot.send_media_group(BINDED_GROUP, media)
-                sleep(21)
+                try:
+                    context.bot.send_media_group(BINDED_GROUP, media)
+                    sleep(21)
+                except Exception as e:
+                    error_info = "Fail to send media group.\nmedia info:\n" + media.__str__ + "\n" + traceback.format_exc(e) + "\n\n"
+                    logging.error(error_info)
         else:
             for media in medias:
-                context.bot.send_media_group(BINDED_GROUP, media)
-                sleep(4)
+                try:
+                    context.bot.send_media_group(BINDED_GROUP, media)
+                    sleep(4)
+                except Exception as e:
+                    error_info = "Fail to send media group.\nmedia info:\n" + media.__str__ + "\n" + traceback.format_exc(e) + "\n\n"
+                    logging.error(error_info)
 
 
 def main() -> None:
