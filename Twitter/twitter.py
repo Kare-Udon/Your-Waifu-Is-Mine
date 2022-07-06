@@ -11,7 +11,7 @@ db = sql.sqlite.database()
 class Twitter:
     def __init__(self):
         try:
-            f = open("./settings.json", "r")
+            f = open("./data/settings.json", "r")
         except FileNotFoundError:
             print("Please create settings.json")
 

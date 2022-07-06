@@ -27,7 +27,7 @@ db = sql.sqlite.database()
 k = Telegram.keyboard.keyboard()
 
 try:
-    f = open("./settings.json", "r")
+    f = open("./data/settings.json", "r")
 except FileNotFoundError:
     print("Please create settings.json")
     exit(1)
