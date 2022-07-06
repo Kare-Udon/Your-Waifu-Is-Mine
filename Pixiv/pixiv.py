@@ -15,7 +15,7 @@ from pixivpy3 import AppPixivAPI
 db = sql.sqlite.database()
 
 LOG_FORMAT = "%(asctime)s - %(levelname)s - %(message)s"
-logging.basicConfig(filename="error.log",
+logging.basicConfig(filename="./data/error.log",
                     level=logging.ERROR, format=LOG_FORMAT)
 
 loop = asyncio.new_event_loop()

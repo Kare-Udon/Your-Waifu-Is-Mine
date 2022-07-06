@@ -52,7 +52,7 @@ if BOT_TOKEN == "" and ALLOWED_USERS == [] and BINDED_GROUP == "" and SENT_INTER
     exit(1)
 
 LOG_FORMAT = "%(asctime)s - %(levelname)s - %(message)s"
-logging.basicConfig(filename="error.log",
+logging.basicConfig(filename="./data/error.log",
                     level=logging.ERROR, format=LOG_FORMAT)
 
 FUNCTION_SELECT, ADD_SOURCE, REMOVE_SOURCE, ADD_TWITTER, ADD_PIXIV, REMOVE_TWITTER, REMOVE_PIXIV, SETTINGS, SETTINGS_LIST_SOURCE = range(
