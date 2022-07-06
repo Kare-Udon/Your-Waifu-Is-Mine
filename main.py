@@ -4,6 +4,7 @@ import os
 import traceback
 from time import sleep
 import prettytable as pt
+import re
 
 from telegram import ReplyKeyboardMarkup, ReplyKeyboardRemove, Update, ParseMode, InputMediaPhoto
 from telegram.ext import (
@@ -35,7 +36,6 @@ settings_json = f.read()
 f.close()
 settings = json.loads(settings_json)
 
-
 BOT_TOKEN = settings["telegram"]["BOT_TOKEN"]
 ALLOWED_USERS = settings["telegram"]["ALLOWED_USERS"]
 BINDED_GROUP = settings["telegram"]["BINDED_GROUP"]
@@ -50,7 +50,6 @@ if BOT_TOKEN == "" and ALLOWED_USERS == [] and BINDED_GROUP == "":
 if BOT_TOKEN == "" and ALLOWED_USERS == [] and BINDED_GROUP == "" and SENT_INTERVAL == 0:
     print("Please set BOT_TOKEN, ALLOWED_USERS and BINDED_GROUP")
     exit(1)
-
 
 LOG_FORMAT = "%(asctime)s - %(levelname)s - %(message)s"
 logging.basicConfig(filename="error.log",
@@ -151,7 +150,8 @@ def add_source(update: Update, context: CallbackContext) -> int:
 def add_twitter(update: Update, context: CallbackContext) -> int:
     message = update.message.text
     if message != '/cancel':
-        username = message.split('/')[-1]
+        regulate_url = re.match(r"(\b.*)\?", message)[1]
+        username = regulate_url.split('/')[-1]
         twitter_id = twi.url_to_id(username)
         if db.add_twitter_user(twitter_id, username):
             update.message.reply_text(
@@ -340,7 +340,8 @@ def get_update(context: CallbackContext) -> None:
                     context.bot.send_media_group(BINDED_GROUP, media)
                     sleep(21)
                 except Exception as e:
-                    error_info = "Fail to send media group.\nmedia info:\n" + media.__str__ + "\n" + traceback.format_exc(e) + "\n\n"
+                    error_info = "Fail to send media group.\nmedia info:\n" + media.__str__ + "\n" + traceback.format_exc(
+                        e) + "\n\n"
                     logging.error(error_info)
         else:
             for media in medias:
@@ -348,7 +349,8 @@ def get_update(context: CallbackContext) -> None:
                     context.bot.send_media_group(BINDED_GROUP, media)
                     sleep(4)
                 except Exception as e:
-                    error_info = "Fail to send media group.\nmedia info:\n" + media.__str__ + "\n" + traceback.format_exc(e) + "\n\n"
+                    error_info = "Fail to send media group.\nmedia info:\n" + media.__str__ + "\n" + traceback.format_exc(
+                        e) + "\n\n"
                     logging.error(error_info)
 
     # get pixiv update
@@ -366,7 +368,8 @@ def get_update(context: CallbackContext) -> None:
                     context.bot.send_media_group(BINDED_GROUP, media)
                     sleep(21)
                 except Exception as e:
-                    error_info = "Fail to send media group.\nmedia info:\n" + media.__str__ + "\n" + traceback.format_exc(e) + "\n\n"
+                    error_info = "Fail to send media group.\nmedia info:\n" + media.__str__ + "\n" + traceback.format_exc(
+                        e) + "\n\n"
                     logging.error(error_info)
         else:
             for media in medias:
@@ -374,7 +377,8 @@ def get_update(context: CallbackContext) -> None:
                     context.bot.send_media_group(BINDED_GROUP, media)
                     sleep(4)
                 except Exception as e:
-                    error_info = "Fail to send media group.\nmedia info:\n" + media.__str__ + "\n" + traceback.format_exc(e) + "\n\n"
+                    error_info = "Fail to send media group.\nmedia info:\n" + media.__str__ + "\n" + traceback.format_exc(
+                        e) + "\n\n"
                     logging.error(error_info)
 
 
