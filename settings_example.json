@@ -9,5 +9,9 @@
     },
     "twitter": {
         "TWITTER_TOKEN": ""
+    },
+    "pixiv": {
+        "ACCESS_TOKEN": "",
+        "REFRESH_TOKEN": ""
     }
 }

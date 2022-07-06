@@ -1,9 +1,12 @@
 import logging
 import json
 import os
+import traceback
+from time import sleep
 import prettytable as pt
+import re
 
-from telegram import ReplyKeyboardMarkup, ReplyKeyboardRemove, Update, ParseMode
+from telegram import ReplyKeyboardMarkup, ReplyKeyboardRemove, Update, ParseMode, InputMediaPhoto
 from telegram.ext import (
     Updater,
     CommandHandler,
@@ -16,20 +19,22 @@ from telegram.ext import (
 import Telegram.keyboard
 import sql.sqlite
 import Twitter.twitter
+import Pixiv.pixiv
 
 twi = Twitter.twitter.Twitter()
+pix = Pixiv.pixiv.Pixiv()
 db = sql.sqlite.database()
 k = Telegram.keyboard.keyboard()
 
 try:
-    f = open("./settings.json", "r")
+    f = open("./data/settings.json", "r")
 except FileNotFoundError:
     print("Please create settings.json")
+    exit(1)
 
 settings_json = f.read()
 f.close()
 settings = json.loads(settings_json)
-
 
 BOT_TOKEN = settings["telegram"]["BOT_TOKEN"]
 ALLOWED_USERS = settings["telegram"]["ALLOWED_USERS"]
@@ -46,9 +51,8 @@ if BOT_TOKEN == "" and ALLOWED_USERS == [] and BINDED_GROUP == "" and SENT_INTER
     print("Please set BOT_TOKEN, ALLOWED_USERS and BINDED_GROUP")
     exit(1)
 
-
 LOG_FORMAT = "%(asctime)s - %(levelname)s - %(message)s"
-logging.basicConfig(filename="error.log",
+logging.basicConfig(filename="./data/error.log",
                     level=logging.ERROR, format=LOG_FORMAT)
 
 FUNCTION_SELECT, ADD_SOURCE, REMOVE_SOURCE, ADD_TWITTER, ADD_PIXIV, REMOVE_TWITTER, REMOVE_PIXIV, SETTINGS, SETTINGS_LIST_SOURCE = range(
@@ -56,9 +60,13 @@ FUNCTION_SELECT, ADD_SOURCE, REMOVE_SOURCE, ADD_TWITTER, ADD_PIXIV, REMOVE_TWITT
 
 
 def start(update: Update, context: CallbackContext) -> int:
-    context.job_queue.run_once(get_twitter_update, when=0)
+    # initlize the database
+    db.init_database()
+    # set repeating job
+    context.job_queue.run_once(get_update, when=0)
     context.job_queue.run_repeating(
-        get_twitter_update, interval=int(SENT_INTERVAL), first=0)
+        get_update, interval=int(SENT_INTERVAL), first=0)
+
     user = update.message.from_user['username']
     if user not in ALLOWED_USERS:
         update.message.reply_text(
@@ -124,8 +132,9 @@ def add_source(update: Update, context: CallbackContext) -> int:
         return ADD_TWITTER
     if message == 'Pixiv':
         update.message.reply_text(
-            'Under construction.',
+            "Please send me the url of a pixiv user. Link format:'https://www.pixiv.net/users/PIXIV_USERID' Send /cancel to cancel.",
         )
+        return ADD_PIXIV
     # OR Go Back
     reply_keyboard = k.main_menu
     update.message.reply_text(
@@ -141,7 +150,8 @@ def add_source(update: Update, context: CallbackContext) -> int:
 def add_twitter(update: Update, context: CallbackContext) -> int:
     message = update.message.text
     if message != '/cancel':
-        username = message.split('/')[-1]
+        regulate_url = re.match(r"(\b.*)\?", message)[1]
+        username = regulate_url.split('/')[-1]
         twitter_id = twi.url_to_id(username)
         if db.add_twitter_user(twitter_id, username):
             update.message.reply_text(
@@ -162,9 +172,17 @@ def add_twitter(update: Update, context: CallbackContext) -> int:
 
 
 def add_pixiv(update: Update, context: CallbackContext) -> int:
-    update.message.reply_text(
-        "Under construction.",
-    )
+    message = update.message.text
+    if message != '/cancel':
+        user_id = message.split('/')[-1]
+        username = pix.get_username(user_id)
+        if db.add_pixiv_user(user_id, username):
+            update.message.reply_text(
+                "Pixiv user " + username + " add successfully.")
+        else:
+            update.message.reply_text(
+                "Pixiv user " + username + " add failed or already exists.")
+
     reply_keyboard = k.main_menu
     update.message.reply_text(
         'Choose the function below.',
@@ -185,8 +203,9 @@ def remove_source(update: Update, context: CallbackContext) -> int:
         return REMOVE_TWITTER
     if message == 'Pixiv':
         update.message.reply_text(
-            'Under construction.',
+            "Please send me the url of a pixiv user. Link format:'https://www.pixiv.net/users/PIXIV_USERID' Send /cancel to cancel.",
         )
+        return REMOVE_PIXIV
     # OR Go Back
     reply_keyboard = k.main_menu
     update.message.reply_text(
@@ -224,9 +243,15 @@ def remove_twitter(update: Update, context: CallbackContext) -> int:
 
 
 def remove_pixiv(update: Update, context: CallbackContext) -> int:
-    update.message.reply_text(
-        'Under construction.',
-    )
+    message = update.message.text
+    if message != '/cancel':
+        user_id = message.split('/')[-1]
+        if db.del_pixiv_user(user_id):
+            update.message.reply_text(
+                "Delete Successfully.")
+        else:
+            update.message.reply_text(
+                "Delete Failed. Please check the log file.")
 
     reply_keyboard = k.main_menu
     update.message.reply_text(
@@ -272,13 +297,20 @@ def list_source(update: Update, context: CallbackContext) -> int:
         table.align['Twitter ID'] = 'l'
         for info in infos:
             table.add_row([info[0], info[1]])
-        
+
         update.message.reply_text(
             f'<pre>{table}</pre>', parse_mode=ParseMode.HTML
         )
     if message == 'Pixiv':
+        infos = db.get_all_pixiv_user_info()
+        table = pt.PrettyTable(['Username', 'Pixiv ID'])
+        table.align['Username'] = 'l'
+        table.align['Pixiv ID'] = 'l'
+        for info in infos:
+            table.add_row([info[0], info[1]])
+
         update.message.reply_text(
-            'Under construction.',
+            f'<pre>{table}</pre>', parse_mode=ParseMode.HTML
         )
 
     reply_keyboard = k.main_menu
@@ -292,31 +324,62 @@ def list_source(update: Update, context: CallbackContext) -> int:
     return FUNCTION_SELECT
 
 
-def get_twitter_update(context: CallbackContext) -> None:
-    twitter_infos = db.get_all_twitter_user_info()
-    for info in twitter_infos:
-        name = info[0]
-        id = info[1]
-        return_data = twi.get_new_tweets_of_user(id)
-        tweets_with_media = return_data[0]
-        true_urls = []
-        if tweets_with_media != []:
-            #medias = return_data[1]
-            true_urls = return_data[2]
-        for tweet, true_url in zip(tweets_with_media, true_urls):
-            if db.add_new_tweet(name, tweet['id']):
-                #mediakeys = tweet['attachments']['media_keys']
-                #photo_urls = []
-                # for mediakey in mediakeys:
-                # for media in medias:
-                # if mediakey == media['media_key']:
-                # photo_urls.append(telepot.namedtuple.InputMediaPhoto(media=media['url']))
-                #text = tweet['text']
-                #bot.sendMediaGroup(BINDED_GROUP, photo_urls)
-                context.bot.sendMessage(BINDED_GROUP, true_url)
-            else:
-                break
-        db.shorten_twitter_db(name)
+def get_update(context: CallbackContext) -> None:
+    # get twitter update
+    try:
+        medias = twi.get_twitter_update()
+    except Exception as e:
+        medias = []
+        error_info = "Fail to get twitter update.\n" + traceback.format_exc(e)
+        logging.error(error_info)
+
+    if medias:
+        if len(medias) > 4:
+            for media in medias:
+                try:
+                    context.bot.send_media_group(BINDED_GROUP, media)
+                    sleep(21)
+                except Exception as e:
+                    error_info = "Fail to send media group.\nmedia info:\n" + media.__str__ + "\n" + traceback.format_exc(
+                        e) + "\n\n"
+                    logging.error(error_info)
+        else:
+            for media in medias:
+                try:
+                    context.bot.send_media_group(BINDED_GROUP, media)
+                    sleep(4)
+                except Exception as e:
+                    error_info = "Fail to send media group.\nmedia info:\n" + media.__str__ + "\n" + traceback.format_exc(
+                        e) + "\n\n"
+                    logging.error(error_info)
+
+    # get pixiv update
+    try:
+        return_data = pix.get_pixiv_update()
+    except Exception as e:
+        return_data = []
+        error_info = "Fail to get pixiv update.\n" + traceback.format_exc(e)
+        logging.error(error_info)
+
+    for medias in return_data:
+        if len(return_data) > 4:
+            for media in medias:
+                try:
+                    context.bot.send_media_group(BINDED_GROUP, media)
+                    sleep(21)
+                except Exception as e:
+                    error_info = "Fail to send media group.\nmedia info:\n" + media.__str__ + "\n" + traceback.format_exc(
+                        e) + "\n\n"
+                    logging.error(error_info)
+        else:
+            for media in medias:
+                try:
+                    context.bot.send_media_group(BINDED_GROUP, media)
+                    sleep(4)
+                except Exception as e:
+                    error_info = "Fail to send media group.\nmedia info:\n" + media.__str__ + "\n" + traceback.format_exc(
+                        e) + "\n\n"
+                    logging.error(error_info)
 
 
 def main() -> None:
