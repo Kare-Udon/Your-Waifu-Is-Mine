@@ -1,0 +1,8 @@
+version: "3"
+
+services:
+  waifu:
+    container_name: "waifu"
+    build: .
+    volumes:
+      - ~/waifu-data/:/root/waifu/data
