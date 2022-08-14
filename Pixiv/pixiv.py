@@ -158,12 +158,16 @@ class Pixiv:
                                 Pixiv.get_image(self, image_url, images)))
                         loop.run_until_complete(asyncio.wait(tasks))
 
+                        return_text = (
+                            f'#{name} #pixiv\n'
+                            f'<a href="{post_url}">URL</a>'
+                        )
+
                         input_medias = []
                         for image in images:
-
                             if image == images[0]:
                                 input_medias.append(
-                                    InputMediaPhoto(image, caption=post_url))
+                                    InputMediaPhoto(image, caption=return_text, parse_mode='HTML'))
                             else:
                                 input_medias.append(InputMediaPhoto(image))
 
