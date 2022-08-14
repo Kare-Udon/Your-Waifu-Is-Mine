@@ -1,12 +1,14 @@
 import logging
 import json
 import os
+import time
 import traceback
 from time import sleep
+from xml.etree.ElementTree import tostring
 import prettytable as pt
 import re
 
-from telegram import ReplyKeyboardMarkup, ReplyKeyboardRemove, Update, ParseMode, InputMediaPhoto
+from telegram import ReplyKeyboardMarkup, ReplyKeyboardRemove, Update, ParseMode, InputMediaDocument
 from telegram.ext import (
     Updater,
     CommandHandler,
@@ -276,6 +278,13 @@ def settings(update: Update, context: CallbackContext) -> int:
             ),
         )
         return SETTINGS_LIST_SOURCE
+    else:
+        if message == 'Print Log':
+            os.system(
+                "touch /tmp/waifu_log.txt && tail -n 100 ./data/error.log > /tmp/waifu_log.txt")
+            update.message.reply_document(document=open('/tmp/waifu_log.txt', 'rb'), filename=(
+                time.strftime("%Y-%m-%d %H-%M-%S", time.localtime()) + '.txt'))
+            os.system('rm /tmp/waifu_log.txt')
 
     reply_keyboard = k.main_menu
     update.message.reply_text(
@@ -397,7 +406,7 @@ def main() -> None:
             REMOVE_SOURCE: [MessageHandler(Filters.regex('^(Twitter|Pixiv|Go Back)$'), remove_source)],
             REMOVE_TWITTER: [MessageHandler(Filters.text, remove_twitter)],
             REMOVE_PIXIV: [MessageHandler(Filters.text, remove_pixiv)],
-            SETTINGS: [MessageHandler(Filters.regex('^(List Source|Go Back)$'), settings)],
+            SETTINGS: [MessageHandler(Filters.regex('^(List Source|Print Log|Go Back)$'), settings)],
             SETTINGS_LIST_SOURCE: [MessageHandler(Filters.regex('^(Twitter|Pixiv|Go Back)$'), list_source)],
         },
         fallbacks=[CommandHandler('cancel', function_select)],

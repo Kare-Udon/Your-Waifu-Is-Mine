@@ -16,6 +16,7 @@ class keyboard:
 
     settings_menu = [
         ['List Source'],
+        ['Print Log'],
         ['Go Back'],
     ]
     
