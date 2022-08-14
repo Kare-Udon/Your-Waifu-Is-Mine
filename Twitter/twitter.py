@@ -56,9 +56,19 @@ class Twitter:
             "content-type": "application/x-www-form-urlencoded; charset=UTF-8"
         }
         data_raw = "input=%40" + username + ""
-        res = requests.post('https://tweeterid.com/ajax.php',
-                            data=data_raw, headers=header)
-        return res.text
+        text = ''
+        retries = 0
+        while text != '':
+            res = requests.post('https://tweeterid.com/ajax.php',
+                                data=data_raw, headers=header)
+            if retries >= 5:
+                raise Exception('Convert twitter username to id failed. Too many tries!')
+            if res.text != 'error':
+                text = res.text
+            else:
+                retries += 1
+                os.sleep(5)
+        return text
 
     def get_twitter_update(self):
         twitter_infos = db.get_all_twitter_user_info()
