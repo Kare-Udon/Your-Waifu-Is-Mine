@@ -6,3 +6,5 @@ services:
     build: .
     volumes:
       - ~/waifu-data/:/root/waifu/data
+    environment:
+      TZ: "Asia/Shanghai"
