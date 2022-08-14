@@ -80,12 +80,17 @@ class Twitter:
                         tweet_with_media['attachments']['media_keys'])
                     twitter_url = "https://twitter.com/" + \
                         str(name) + "/status/" + str(tweet_with_media['id'])
+                    return_text = (
+                        f'#{name} #twitter\n'
+                        f'<a href="{twitter_url}">URL</a>\n'
+                        f'Text: {tweet_with_media["text"]}'
+                    )
 
                     input_medias = []
                     for index in range(num_of_images):
                         if index == 0:
                             input_medias.append(InputMediaPhoto(
-                                medias[index + image_counter]['url'], caption=twitter_url))
+                                medias[index + image_counter]['url'], caption=return_text, parse_mode='HTML'))
                         else:
                             input_medias.append(
                                 InputMediaPhoto(medias[index]['url']))
