@@ -52,27 +52,15 @@ class Twitter:
         return [tweets_with_media, media, true_urls]
 
     def url_to_id(self, username):
-        header = {
-            "content-type": "application/x-www-form-urlencoded; charset=UTF-8"
-        }
-        data_raw = "input=%40" + username + ""
-        text = ''
-        retries = 0
-        while text != '':
-            res = requests.post('https://tweeterid.com/ajax.php',
-                                data=data_raw, headers=header)
-            if retries >= 5:
-                raise Exception('Convert twitter username to id failed. Too many tries!')
-            if res.text != 'error':
-                text = res.text
-            else:
-                retries += 1
-                os.sleep(5)
-        return text
+        result = self.client.get_user(username=username)
+        id = result.data['id']
+        if id is None or id == '':
+            raise Exception('Could not convert Twitter username to Twitter ID!')
+        return id
 
     def get_twitter_update(self):
         twitter_infos = db.get_all_twitter_user_info()
-        return_data = []    #
+        return_data = []
         for info in twitter_infos:
             name = info[0]
             user_id = info[1]
