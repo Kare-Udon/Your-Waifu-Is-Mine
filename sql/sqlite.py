@@ -11,9 +11,9 @@ class database:
             conn = sqlite3.connect('./data/accounts.db')
             c = conn.cursor()
             c.execute(
-                "CREATE TABLE IF NOT EXISTS twitter_users (id TEXT PRIMARY KEY, name TEXT)")
+                "CREATE TABLE IF NOT EXISTS twitter_users (id TEXT PRIMARY KEY NOT NULL, name TEXT NOT NULL)")
             c.execute(
-                "CREATE TABLE IF NOT EXISTS pixiv_users (id TEXT PRIMARY KEY, name TEXT)")
+                "CREATE TABLE IF NOT EXISTS pixiv_users (id TEXT PRIMARY KEY NOT NULL, name TEXT NOT NULL)")
             conn.commit
             conn.close()
         if not os.path.exists('./data/records.db'):
